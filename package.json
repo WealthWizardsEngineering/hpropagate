@@ -10,5 +10,9 @@
   "license": "MIT",
   "dependencies": {
     "uuid": "3.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:WealthWizardsEngineering/ww-agent.git"
   }
 }

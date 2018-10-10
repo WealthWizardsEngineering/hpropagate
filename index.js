@@ -7,19 +7,50 @@ const tracer = require('./tracer')
 const originalHttpCreateServer = http.createServer
 const originalRequest = http.request
 
+function setAndPropagateCorrelationId(req, res) {
+    let correlationId = req.headers['x-correlation-id']
+    if (typeof correlationId === 'undefined') {
+        correlationId = uuid.v4()
+    }
+    tracer.currentTrace.context.set('x-correlation-id', correlationId)
+    res.setHeader('x-correlation-id', correlationId)
+}
+
+function propagate(req, ...headers) {
+    headers.forEach(header => {
+        if (typeof req.headers[header] !== 'undefined') {
+            tracer.currentTrace.context.set(header, req.headers[header])
+        }
+    })
+}
+
+function inject(options, ...headers) {
+    console.log("DEBUG injecting headers for call to ", options.url)
+    headers.forEach(header => {
+        if (tracer.currentTrace.context.has(header)) {
+            console.log("DEBUG injecting ", header, " with ", tracer.currentTrace.context.get(header))
+            options.headers[header] = tracer.currentTrace.context.get(header)
+        }
+    })
+}
+
 function wrappedListener(listener) {
 
     return (req, res, next) => {
 
         tracer.newTrace('httpRequest')
 
-        let correlationId = req.headers['x-correlation-id']
-        if (typeof correlationId === 'undefined') {
-            correlationId = uuid.v4()
-        }
+        setAndPropagateCorrelationId(req, res)
 
-        tracer.currentTrace.context.set('correlationId', correlationId)
-        res.setHeader('X-Correlation-ID', correlationId)
+        propagate(req,
+            'x-request-id',
+            'x-b3-traceid',
+            'x-b3-spanid',
+            'x-b3-parentspanid',
+            'x-b3-sampled',
+            'x-b3-flags',
+            'x-ot-span-context',
+            'x-variant-id')
 
         listener.call(null, req, res, next)
     }
@@ -32,7 +63,17 @@ function wrappedHttpCreateServer(listener) { // args are ([options<Object>], [li
 
 function wrappedHttpRequest(options, cb) {
 
-    options.headers['x-correlation-id'] = tracer.currentTrace.context.get('correlationId')
+    inject(options,
+        'x-correlation-id',
+        'x-request-id',
+        'x-b3-traceid',
+        'x-b3-spanid',
+        'x-b3-parentspanid',
+        'x-b3-sampled',
+        'x-b3-flags',
+        'x-ot-span-context',
+        'x-variant-id'
+    )
 
     return originalRequest.call(null, options, cb)
 }
