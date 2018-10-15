@@ -1,8 +1,8 @@
 'use strict'
 
 const tracer = require('./lib/tracer')
-const http_wrapper = require('./lib/http_wrapper')
+const httpWrapper = require('./lib/http_wrapper')
 
-http_wrapper.wrapHttp()
+httpWrapper.wrapHttp()
 
 tracer.enable()
