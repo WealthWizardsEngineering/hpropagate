@@ -1,0 +1,4 @@
+.eslint*
+.circleci
+test
+*.tgz
