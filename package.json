@@ -1,14 +1,32 @@
 {
-  "name": "ww-agent",
+  "name": "hpropagate",
   "version": "0.0.1",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "lint": "eslint lib test index.js",
+    "test": "tape test/*.test.js",
+    "ci": "npm install && npm run lint && npm test"
   },
   "author": "Wealth Wizards Engineering",
   "license": "MIT",
   "dependencies": {
     "uuid": "3.3.2"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:WealthWizardsEngineering/hpropagate.git"
+  },
+  "devDependencies": {
+    "eslint": "^5.7.0",
+    "eslint-config-standard": "^12.0.0",
+    "eslint-plugin-import": "^2.14.0",
+    "eslint-plugin-node": "^7.0.1",
+    "eslint-plugin-promise": "^4.0.1",
+    "eslint-plugin-standard": "^4.0.0",
+    "express": "^4.16.4",
+    "request": "^2.88.0",
+    "supertest": "^3.3.0",
+    "tape": "4.9.1"
   }
 }
