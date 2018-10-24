@@ -1,7 +1,7 @@
 'use strict'
 
 // Needed to instrument the http module
-require('../index')
+const hpropagate = require('../index')
 const test = require('tape')
 const http = require('http')
 const supertest = require('supertest')
@@ -11,6 +11,11 @@ const request = require('request')
 const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i
 
 const app = express()
+hpropagate({
+  headersToPropagate: [
+    'x-custom-1', 'x-custom-2'
+  ]
+})
 
 // Simple Express app that makes a call to a outbound service
 // to prove that we propagate headers (using the request module)
@@ -79,32 +84,39 @@ test('should set and propagate correlation id if not received on request', asser
   })
 })
 
-test('should propagate tracing headers and variant id', assert => {
-  assert.plan(9)
+test('should propagate headers from list', assert => {
+  assert.plan(3)
 
   withOutboundService(async (service) => {
     service.on('request', (req) => {
-      assert.equal(req.headers['x-request-id'], 'request-id')
-      assert.equal(req.headers['x-b3-traceid'], 'trace-id')
-      assert.equal(req.headers['x-b3-spanid'], 'span-id')
-      assert.equal(req.headers['x-b3-parentspanid'], 'parent-span-id')
-      assert.equal(req.headers['x-b3-sampled'], 'sampled')
-      assert.equal(req.headers['x-b3-flags'], 'flags')
-      assert.equal(req.headers['x-ot-span-context'], 'span-context')
-      assert.equal(req.headers['x-variant-id'], 'variant-id')
+      assert.equal(req.headers['x-custom-1'], 'random1')
+      assert.equal(req.headers['x-custom-2'], 'random2')
     })
 
     const response = await supertest(app)
       .get('/')
-      .set('x-request-id', 'request-id')
-      .set('x-b3-traceid', 'trace-id')
-      .set('x-b3-spanid', 'span-id')
-      .set('x-b3-parentspanid', 'parent-span-id')
-      .set('x-b3-sampled', 'sampled')
-      .set('x-b3-flags', 'flags')
-      .set('x-ot-span-context', 'span-context')
-      .set('x-variant-id', 'variant-id')
+      .set('x-custom-1', 'random1')
+      .set('x-custom-2', 'random2')
 
-    assert.equal(response.statusCode, 200)
+    assert.equal(response.statusCode, 200);
+  });
+});
+
+test('should not propagate correlation id when asked not to', assert => {
+  assert.plan(3);
+
+  hpropagate({
+    setAndPropagateCorrelationId: false
   })
-})
+
+  withOutboundService(async service => {
+    service.on('request', request => {
+      assert.ok(typeof request.headers['x-correlation-id'] === 'undefined');
+    });
+
+    const response = await supertest(app).get('/')
+
+    assert.equal(response.statusCode, 200);
+    assert.ok(typeof response.headers['x-correlation-id'] === 'undefined')
+  });
+});
