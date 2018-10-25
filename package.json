@@ -7,7 +7,8 @@
     "lint": "eslint lib test index.js",
     "lint:fix": "npm run lint -- --fix",
     "test": "tape test/*.test.js",
-    "ci": "npm install && npm run lint && npm test"
+    "ci": "npm install && npm run lint && npm test",
+    "release": "rm -rf node_modules && npm i --production && npm publish"
   },
   "author": "Wealth Wizards Engineering",
   "license": "MIT",
