@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "lint": "eslint lib test index.js",
+    "lint:fix": "npm run lint -- --fix",
     "test": "tape test/*.test.js",
     "ci": "npm install && npm run lint && npm test"
   },
@@ -19,6 +20,7 @@
   },
   "devDependencies": {
     "eslint": "^5.7.0",
+    "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.14.0",
     "eslint-plugin-node": "^7.0.1",
