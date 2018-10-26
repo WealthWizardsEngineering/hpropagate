@@ -13,7 +13,7 @@ jobs:
       - checkout
       - run: npm run ci
       - run: echo "//registry.npmjs.org/:_authToken=$NPM_TOKEN" >> ~/.npmrc
-      - run: npm publish
+      - run: npm run release
 workflows:
   version: 2
   test_builds:
