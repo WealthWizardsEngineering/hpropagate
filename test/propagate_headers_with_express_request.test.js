@@ -118,3 +118,57 @@ test('should not propagate correlation id when asked not to', assert => {
     assert.ok(typeof response.headers['x-correlation-id'] === 'undefined');
   });
 });
+
+test('should propagate headers in responses when asked to', assert => {
+  assert.plan(5);
+
+  hpropagate({
+    propagateInResponses: true,
+    headersToPropagate: [
+      'x-custom-1', 'x-custom-2',
+    ],
+  });
+
+  withOutboundService(async service => {
+    service.on('request', req => {
+      assert.equal(req.headers['x-custom-1'], 'random1');
+      assert.equal(req.headers['x-custom-2'], 'random2');
+    });
+
+    const response = await supertest(app)
+      .get('/')
+      .set('x-custom-1', 'random1')
+      .set('x-custom-2', 'random2');
+
+    assert.equal(response.statusCode, 200);
+    assert.equal(response.headers['x-custom-1'], 'random1');
+    assert.equal(response.headers['x-custom-2'], 'random2');
+  });
+});
+
+test('should not propagate headers in responses when not asked to', assert => {
+  assert.plan(5);
+
+  hpropagate({
+    propagateInResponses: false,
+    headersToPropagate: [
+      'x-custom-1', 'x-custom-2',
+    ],
+  });
+
+  withOutboundService(async service => {
+    service.on('request', req => {
+      assert.equal(req.headers['x-custom-1'], 'random1');
+      assert.equal(req.headers['x-custom-2'], 'random2');
+    });
+
+    const response = await supertest(app)
+      .get('/')
+      .set('x-custom-1', 'random1')
+      .set('x-custom-2', 'random2');
+
+    assert.equal(response.statusCode, 200);
+    assert.ok(typeof response.headers['x-custom-1'] === 'undefined');
+    assert.ok(typeof response.headers['x-custom-2'] === 'undefined');
+  });
+});
