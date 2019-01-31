@@ -74,6 +74,12 @@ hpropagate({
     ]
 });
 ```
+- to enable the propagation of the headers in the response (to allow more traceability):
+
+```javascript
+hpropagate({
+    propagateInResponses: true
+});
 
 ## The How
 
