@@ -4,6 +4,7 @@ const http = require('http');
 const supertest = require('supertest');
 const express = require('express');
 const request = require('request');
+const sinon = require('sinon');
 const hpropagate = require('../index');
 
 const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
@@ -25,6 +26,16 @@ app.get('/', (req, res) => {
     }
     res.status(200).send('successful');
   });
+});
+
+app.get('/parallel', (req, res) => {
+  setTimeout(() => request('http://localhost:8888/', (error, response) => {
+    if (error || response.statusCode !== 200) {
+      res.status(500).send('boom');
+      return;
+    }
+    res.status(200).send('successful');
+  }), req.query.duration);
 });
 
 // Simple HTTP service created with the original (not instrumented)
@@ -170,5 +181,43 @@ test('should not propagate headers in responses when not asked to', assert => {
     assert.equal(response.statusCode, 200);
     assert.ok(typeof response.headers['x-custom-1'] === 'undefined');
     assert.ok(typeof response.headers['x-custom-2'] === 'undefined');
+  });
+});
+
+test('should use correct headers for all calls', assert => {
+  assert.plan(5);
+
+  hpropagate({
+    propagateInResponses: false,
+    headersToPropagate: [
+      'x-custom-1', 'x-custom-2',
+    ],
+  });
+
+  withOutboundService(async service => {
+    const stubRequestFn = sinon.stub();
+    service.on('request', req => {
+      stubRequestFn(req.headers['x-custom-1']);
+      stubRequestFn(req.headers['x-custom-2']);
+    });
+
+    await Promise.all([
+      supertest(app)
+        .get('/parallel')
+        .query({ duration: 1000 })
+        .set('x-custom-1', 'random1')
+        .set('x-custom-2', 'random2'),
+      supertest(app)
+        .get('/parallel')
+        .query({ duration: 200 })
+        .set('x-custom-1', 'random3')
+        .set('x-custom-2', 'random4'),
+    ]);
+
+    assert.equal(stubRequestFn.callCount, 4);
+    assert.equal(stubRequestFn.args[0][0], 'random3');
+    assert.equal(stubRequestFn.args[1][0], 'random4');
+    assert.equal(stubRequestFn.args[2][0], 'random1');
+    assert.equal(stubRequestFn.args[3][0], 'random2');
   });
 });
