@@ -80,6 +80,7 @@ hpropagate({
 hpropagate({
     propagateInResponses: true
 });
+```
 
 ## The How
 
@@ -95,6 +96,6 @@ Node's `async_hooks` module (new in Node 8) is used to set/reset `tracer.current
 ## Limitations
 
 - Only tested with `Express 4`
-- Only propagate headers if `http.request(options)` is used with `options` as an `Object`.
+- Only propagate headers if `http.request(options, cb)` is used with `options` as an `Object`.
 - Need Node >= 8
 - Many more....
