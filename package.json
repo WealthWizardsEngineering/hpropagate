@@ -20,7 +20,7 @@
     "url": "git+ssh://git@github.com:WealthWizardsEngineering/hpropagate.git"
   },
   "devDependencies": {
-    "eslint": "^5.7.0",
+    "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.1.0",
     "eslint-config-standard": "^12.0.0",
     "eslint-plugin-import": "^2.18.2",
