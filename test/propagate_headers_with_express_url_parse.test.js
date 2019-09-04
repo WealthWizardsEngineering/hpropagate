@@ -13,6 +13,15 @@ hpropagate({
   ],
 });
 
+function majorVersion() {
+  const match = process.version.match(/^v(\d+)/);
+  if (match) {
+    return parseInt(match[1], 10);
+  }
+
+  return undefined;
+}
+
 // Simple Express app that makes a call to a outbound service
 // to prove that we propagate headers (using the request module)
 app.get('/', (req, res) => {
@@ -144,13 +153,16 @@ test('should propagate headers when parsing urls without headers', assert => {
 });
 
 test('should propagate headers similarly for all http.request and http.get method signatures', assert => {
-  const urlPaths = [
+  const urlPaths = majorVersion() >= 10 ? [
     '/',
     '/request/url-first',
     '/request/url-first/no-options',
     '/get/options-first',
     '/get/url-first',
     '/get/url-first/no-options',
+  ] : [
+    '/',
+    '/get/options-first',
   ];
 
   assert.plan(5 * urlPaths.length);
