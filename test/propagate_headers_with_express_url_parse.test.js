@@ -32,6 +32,81 @@ app.get('/', (req, res) => {
   request.end();
 });
 
+app.get('/request/url-first', (req, res) => {
+  const request = http.request('http://localhost:8888/', {}, response => {
+    if (response.statusCode !== 200) {
+      res.status(500).send('boom');
+      return;
+    }
+    res.status(200).send('successful');
+  });
+
+  request.on('error', () => {
+    res.status(500).send('boom');
+  });
+
+  request.end();
+});
+
+app.get('/request/url-first/no-options', (req, res) => {
+  const request = http.request('http://localhost:8888/', response => {
+    if (response.statusCode !== 200) {
+      res.status(500).send('boom');
+      return;
+    }
+    res.status(200).send('successful');
+  });
+
+  request.on('error', () => {
+    res.status(500).send('boom');
+  });
+
+  request.end();
+});
+
+app.get('/get/options-first', (req, res) => {
+  const options = url.parse('http://localhost:8888/');
+  const request = http.get(options, response => {
+    if (response.statusCode !== 200) {
+      res.status(500).send('boom');
+      return;
+    }
+    res.status(200).send('successful');
+  });
+
+  request.on('error', () => {
+    res.status(500).send('boom');
+  });
+});
+
+app.get('/get/url-first', (req, res) => {
+  const request = http.get('http://localhost:8888/', {}, response => {
+    if (response.statusCode !== 200) {
+      res.status(500).send('boom');
+      return;
+    }
+    res.status(200).send('successful');
+  });
+
+  request.on('error', () => {
+    res.status(500).send('boom');
+  });
+});
+
+app.get('/get/url-first/no-options', (req, res) => {
+  const request = http.get('http://localhost:8888/', response => {
+    if (response.statusCode !== 200) {
+      res.status(500).send('boom');
+      return;
+    }
+    res.status(200).send('successful');
+  });
+
+  request.on('error', () => {
+    res.status(500).send('boom');
+  });
+});
+
 // Simple HTTP service created with the original (not instrumented)
 // http server. We'll use it to assert that the headers are properly propagated
 // We can't use nock here or any other modules that intercept http calls as they
@@ -65,5 +140,42 @@ test('should propagate headers when parsing urls without headers', assert => {
 
     assert.equal(response.statusCode, 200);
     assert.equal(correlationId, response.headers['x-correlation-id']);
+  });
+});
+
+test('should propagate headers similarly for all http.request and http.get method signatures', assert => {
+  const urlPaths = [
+    '/',
+    '/request/url-first',
+    '/request/url-first/no-options',
+    '/get/options-first',
+    '/get/url-first',
+    '/get/url-first/no-options',
+  ];
+
+  assert.plan(5 * urlPaths.length);
+
+  const correlationId = 'a-correlation-id';
+  const custom2 = 'value-2';
+  const custom3 = 'value-3';
+
+  withOutboundService(async service => {
+    service.on('request', req => {
+      assert.equal(req.headers['x-custom-2'], custom2);
+      assert.equal(typeof req.headers['x-custom-3'], 'undefined');
+      assert.equal(req.headers['x-correlation-id'], correlationId);
+    });
+
+    for (let i = 0; i < urlPaths.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      const response = await supertest(app)
+        .get(urlPaths[i])
+        .set('x-custom-2', custom2)
+        .set('x-custom-3', custom3)
+        .set('x-correlation-id', correlationId);
+
+      assert.equal(response.statusCode, 200);
+      assert.equal(correlationId, response.headers['x-correlation-id']);
+    }
   });
 });
