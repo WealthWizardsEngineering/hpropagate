@@ -13,8 +13,6 @@
   "author": "Wealth Wizards Engineering",
   "license": "MIT",
   "dependencies": {
-    "request-promise": "^4.2.5",
-    "request-promise-native": "^1.0.8",
     "uuid": "3.3.2"
   },
   "repository": {
@@ -31,6 +29,8 @@
     "eslint-plugin-standard": "^4.0.1",
     "express": "^4.17.1",
     "request": "^2.88.0",
+    "request-promise": "^4.2.5",
+    "request-promise-native": "^1.0.8",
     "sinon": "^7.5.0",
     "supertest": "^3.4.2",
     "tape": "4.11.0"
