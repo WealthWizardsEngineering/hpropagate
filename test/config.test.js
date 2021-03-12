@@ -10,6 +10,7 @@ const defaultHeadersToCollect = [
   'x-b3-flags',
   'x-ot-span-context',
   'x-variant-id',
+  'x-feature-flags',
 ];
 
 const defaultHeadersToInject = [
@@ -22,6 +23,7 @@ const defaultHeadersToInject = [
   'x-b3-flags',
   'x-ot-span-context',
   'x-variant-id',
+  'x-feature-flags',
 ];
 
 test('should provide correlation id header name', assert => {
