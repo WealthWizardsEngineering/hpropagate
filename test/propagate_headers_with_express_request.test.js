@@ -6,13 +6,14 @@ const express = require('express');
 const request = require('request');
 const sinon = require('sinon');
 const hpropagate = require('../index');
+const { getHeader } = require('../index');
 
 const uuidRegex = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i;
 
 const app = express();
 hpropagate({
   headersToPropagate: [
-    'x-custom-1', 'x-custom-2',
+    'x-custom-1', 'x-custom-2', 'x-feature-flags',
   ],
 });
 
@@ -36,6 +37,12 @@ app.get('/parallel', (req, res) => {
     }
     res.status(200).send('successful');
   }), req.query.duration);
+});
+
+app.get('/echo-feature-flags', (req, res) => {
+  setTimeout(() => {
+    res.json({ featureFlags: getHeader('x-feature-flags') });
+  }, 100);
 });
 
 // Simple HTTP service created with the original (not instrumented)
@@ -220,4 +227,22 @@ test('should use correct headers for all calls', assert => {
     assert.equal(stubRequestFn.args[2][0], 'random1');
     assert.equal(stubRequestFn.args[3][0], 'random2');
   });
+});
+
+test('should be able to get a propagate header for current context', async assert => {
+  assert.plan(2);
+
+  hpropagate({
+    propagateInResponses: true,
+    headersToPropagate: [
+      'x-custom-1', 'x-custom-2', 'x-feature-flags',
+    ],
+  });
+
+  const response = await supertest(app)
+    .get('/echo-feature-flags')
+    .set('x-feature-flags', 'random1');
+
+  assert.equal(response.statusCode, 200);
+  assert.deepEquals(response.body, { featureFlags: 'random1' });
 });
